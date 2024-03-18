@@ -5,15 +5,16 @@ let gui;
 let selectedCell = { i: -1, j: -1 };
 let gridSettings = {
   showGrid: true,
-  color: '#FF5733',
+  color: '#1E1B1A',
   colorNames: {
-    '橙色': '#FF5733',
-    '绿色': '#33FF57',
-    '蓝色': '#3357FF',
-    '粉色': '#F333FF',
-    '黄色': '#FFC300'
+    '古韵玄武黑': '#1E1B1A',
+    '月净雪玉白': '#D9D9D6',
+    '钟灵长青绿': '#227F46',
+    '长天深霁蓝': '#013DA2',
+    '千秋宫墙红': '#AB2920',
+    '辉光琉璃黄': '#FA9D08'
   },
-  selectedColorName: '橙色',
+  selectedColorName: '古韵玄武黑',
   cellSize: 20, // 默认网格尺寸
   clearShapes: function() {
     for (let i = 0; i < cols; i++) {
@@ -49,7 +50,7 @@ function setup() {
   for (let i = 0; i < cols; i++) {
     grid[i] = [];
     for (let j = 0; j < rows; j++) {
-      grid[i][j] = { shape: 0, color: '#FF5733' };
+      grid[i][j] = { shape: 0, color: '#1E1B1A' };
     }
   }
 }
@@ -161,15 +162,19 @@ function mousePressed() {
   if (i >= 0 && i < cols && j >= 0 && j < rows) {
     grid[i][j].shape = (grid[i][j].shape + 1) % 11; // 循环形状
     selectedCell = { i, j }; // 更新选中的单元格
-    // 更新颜色
-    gridSettings.color = grid[i][j].color;
+    
+    // 更新颜色为当前在dat.GUI中选定的颜色
+    const currentColor = gridSettings.colorNames[gridSettings.selectedColorName];
+    grid[i][j].color = currentColor; // 使用选中的颜色更新网格颜色
+
     gui.__controllers.forEach(controller => {
       if(controller.property === 'color') {
-        controller.setValue(gridSettings.color);
+        controller.setValue(currentColor);
       }
     });
   }
 }
+
 
 function updateGridParameters() {
   const specificSizes = [20, 25, 40, 50];
