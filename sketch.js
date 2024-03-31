@@ -5,7 +5,6 @@ let gui;
 let selectedCell = { i: -1, j: -1 };
 let gridSettings = {
   showGrid: true,
-  color: '#1E1B1A',
   colorNames: {
     '古韵玄武黑': '#1E1B1A',
     '月净雪玉白': '#D9D9D6',
@@ -15,7 +14,20 @@ let gridSettings = {
     '辉光琉璃黄': '#FA9D08'
   },
   selectedColorName: '古韵玄武黑',
-  cellSize: 20, // 默认网格尺寸
+  shapes: {
+    '无': 0,
+    '正方形': 1,
+    '圆形': 2,
+    '左下三角形': 3,
+    '左上三角形': 4,
+    '右下三角形': 5,
+    '右上三角形': 6,
+    '右下弧': 7,
+    '左下弧': 8,
+    '左上弧': 9,
+    '右上弧': 10
+  },
+  selectedShape: '正方形', // 默认正方形
   clearShapes: function() {
     for (let i = 0; i < cols; i++) {
       for (let j = 0; j < rows; j++) {
@@ -30,16 +42,9 @@ function setup() {
   colorMode(RGB);
 
   gui = new dat.GUI();
-  
   gui.add(gridSettings, 'showGrid').name('显示网格');
-
-  // 使用颜色名称作为下拉菜单的选项
-  gui.add(gridSettings, 'selectedColorName', Object.keys(gridSettings.colorNames)).name('形状颜色').onChange(function(newColorName) {
-    if (selectedCell.i >= 0 && selectedCell.j >= 0) {
-      grid[selectedCell.i][selectedCell.j].color = gridSettings.colorNames[newColorName];
-    }
-  });
-
+  gui.add(gridSettings, 'selectedColorName', Object.keys(gridSettings.colorNames)).name('形状颜色');
+  gui.add(gridSettings, 'selectedShape', Object.keys(gridSettings.shapes)).name('选择形状');
   gui.add(gridSettings, 'clearShapes').name('清空画布');
 
   cellSizeSlider = createSlider(0, 3, 0, 1);
@@ -50,23 +55,22 @@ function setup() {
   for (let i = 0; i < cols; i++) {
     grid[i] = [];
     for (let j = 0; j < rows; j++) {
-      grid[i][j] = { shape: 0, color: '#1E1B1A' };
+      grid[i][j] = { shape: 0, color: gridSettings.colorNames['古韵玄武黑'] };
     }
   }
 }
 
 function draw() {
   background(255);
-  textSize(16); // 设置文字大小
-  fill(0); // 设置文字颜色为黑色
-  text('网格大小：', 10, 25); // 在画布上显示文字
-  textSize(16); // 设置文字大小
-  fill(120); // 设置文字颜色为黑色
-  text('©北京师范大学未来设计学院', width-220, height-15); // 在画布上显示文字
-  // Update grid parameters based on the slider
+  textSize(16);
+  fill(0);
+  text('网格大小：', 10, 25);
+  textSize(16);
+  fill(120);
+  text('©北京师范大学未来设计学院', width - 220, height - 15);
+
   updateGridParameters();
 
-  // Draw grid lines if enabled
   if (gridSettings.showGrid) {
     stroke(200);
     strokeWeight(0.5);
@@ -77,14 +81,12 @@ function draw() {
       let x = offsetX + i * cellSize;
       line(x, 0, x, height);
     }
-
     for (let j = 0; j <= rows; j++) {
       let y = offsetY + j * cellSize;
       line(0, y, width, y);
     }
   }
 
-  // Draw shapes in each grid cell
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
       let x = (width - cols * cellSize) / 2 + i * cellSize;
@@ -93,10 +95,9 @@ function draw() {
 
       fill(cell.color);
       noStroke();
-      
-      // 根据cell.shape绘制不同的形状
+
       switch (cell.shape) {
-          case 1:
+                 case 1:
             rect(x, y, cellSize, cellSize);
             break;
           case 2:
@@ -128,9 +129,8 @@ function draw() {
             break;
       }
 
-      // 如果当前绘制的格子是被选中的格子，则添加蓝色描边高亮
       if (i === selectedCell.i && j === selectedCell.j) {
-        stroke(0, 0, 255); // 蓝色
+        stroke(0, 0, 255);
         strokeWeight(2);
         noFill();
         rect(x, y, cellSize, cellSize);
@@ -140,44 +140,28 @@ function draw() {
 }
 
 function mousePressed() {
-  // 获取dat.GUI的DOM元素
   const guiContainer = gui.domElement;
-
-  // 获取dat.GUI容器的位置和大小
   const guiRect = guiContainer.getBoundingClientRect();
-
-  // 判断鼠标点击是否在dat.GUI的区域内
-  if (mouseX >= guiRect.left && mouseX <= guiRect.right &&
-      mouseY >= guiRect.top && mouseY <= guiRect.bottom) {
-    // 鼠标点击在dat.GUI内，不执行任何操作
+  if (mouseX >= guiRect.left && mouseX <= guiRect.right && mouseY >= guiRect.top && mouseY <= guiRect.bottom) {
     return;
   }
 
-  // 以下是画布上网格选中的逻辑
   let offsetX = (width - cols * cellSize) / 2;
   let offsetY = (height - rows * cellSize) / 2;
   let i = floor((mouseX - offsetX) / cellSize);
   let j = floor((mouseY - offsetY) / cellSize);
 
-  if (i >= 0 && i < cols && j >= 0 && j < rows) {
-    grid[i][j].shape = (grid[i][j].shape + 1) % 11; // 循环形状
-    selectedCell = { i, j }; // 更新选中的单元格
-    
-    // 更新颜色为当前在dat.GUI中选定的颜色
-    const currentColor = gridSettings.colorNames[gridSettings.selectedColorName];
-    grid[i][j].color = currentColor; // 使用选中的颜色更新网格颜色
+  if (i >=   0 && i < cols && j >= 0 && j < rows) {
+    // 更新网格中的形状和颜色
+    grid[i][j].shape = gridSettings.shapes[gridSettings.selectedShape];
+    grid[i][j].color = gridSettings.colorNames[gridSettings.selectedColorName];
 
-    gui.__controllers.forEach(controller => {
-      if(controller.property === 'color') {
-        controller.setValue(currentColor);
-      }
-    });
+    selectedCell = { i, j }; // 更新选中的单元格
   }
 }
 
-
 function updateGridParameters() {
-  const specificSizes = [20, 25, 40, 50];
+  const specificSizes = [20, 25, 40, 50]; // 可以调整为你希望的尺寸
   cellSize = specificSizes[cellSizeSlider.value()];
   cols = floor(width / cellSize);
   rows = floor(height / cellSize);
